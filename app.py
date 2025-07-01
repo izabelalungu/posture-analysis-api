@@ -3,6 +3,7 @@ from PIL import Image, ImageDraw
 import io
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/analyze', methods=['POST'])
 def analyze_image():
