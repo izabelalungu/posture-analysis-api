@@ -1,3 +1,30 @@
+### app.py
+from flask import Flask, request, send_file
+from flask_cors import CORS
+from PIL import Image, ImageDraw, ImageFont
+import io
+import cv2
+import numpy as np
+import mediapipe as mp
+import math
+
+app = Flask(__name__)
+CORS(app)
+
+def get_angle(p1, p2):
+    # Calculează unghiul față de verticală (Ox)
+    x1, y1 = p1
+    x2, y2 = p2
+    radians = math.atan2(y2 - y1, x2 - x1)
+    degrees = math.degrees(radians)
+    # Ajustează astfel încât 0° să fie pe verticală (sus-jos)
+    angle = 90 - degrees
+    if angle > 180:
+        angle -= 360
+    if angle < -180:
+        angle += 360
+    return round(angle, 1)
+
 def analyze_pose(img):
     import math
     import numpy as np
@@ -85,3 +112,15 @@ def analyze_pose(img):
         draw.text((w//2-100, 20), "Nicio postură detectată!", fill=(255,0,0), font=ImageFont.load_default())
 
     return img
+
+@app.route('/analyze', methods=['POST'])
+def analyze_image():
+    img = Image.open(request.files['file']).convert("RGB")
+    img = analyze_pose(img)
+    img_io = io.BytesIO()
+    img.save(img_io, 'JPEG')
+    img_io.seek(0)
+    return send_file(img_io, mimetype='image/jpeg')
+
+if __name__ == "__main__":
+    app.run()
